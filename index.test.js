@@ -21,3 +21,23 @@ describe('API Endpoints', () => {
     expect(response.body).toHaveProperty('error', 'Not Found');
   });
 });
+
+describe('Security & Optimization Headers', () => {
+  it('GET / should return Helmet security headers', async () => {
+    const response = await request(app).get('/');
+    expect(response.headers).toHaveProperty('x-xss-protection');
+    expect(response.headers).toHaveProperty('x-frame-options', 'SAMEORIGIN');
+    expect(response.headers).toHaveProperty('strict-transport-security');
+  });
+
+  it('GET / should return RateLimit headers', async () => {
+    const response = await request(app).get('/');
+    expect(response.headers).toHaveProperty('x-ratelimit-limit');
+    expect(response.headers).toHaveProperty('x-ratelimit-remaining');
+  });
+
+  it('GET / should return CORS headers', async () => {
+      const response = await request(app).get('/');
+      expect(response.headers).toHaveProperty('access-control-allow-origin', '*');
+  });
+});

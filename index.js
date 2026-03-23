@@ -1,11 +1,35 @@
+require('dotenv').config();
 const express = require('express');
 const morgan = require('morgan');
+const helmet = require('helmet');
+const compression = require('compression');
+const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Security Middleware
+app.use(helmet()); // Sets various HTTP headers for security
+app.use(cors()); // Enables Cross-Origin Resource Sharing
+
+// Optimization Middleware
+app.use(compression()); // Compresses HTTP responses
+
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.'
+});
+app.use(limiter);
+
 // Middleware for request logging
 app.use(morgan('combined'));
+
+// Body parsing middleware (for completeness)
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
