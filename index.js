@@ -9,6 +9,9 @@ const rateLimit = require('express-rate-limit');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Logging (Move before rateLimit to log all requests)
+app.use(morgan('combined'));
+
 // Security Middleware
 app.use(helmet()); // Sets various HTTP headers for security
 app.use(cors()); // Enables Cross-Origin Resource Sharing
@@ -20,12 +23,9 @@ app.use(compression()); // Compresses HTTP responses
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.'
+  message: { error: 'Too many requests from this IP, please try again later.' }
 });
 app.use(limiter);
-
-// Middleware for request logging
-app.use(morgan('combined'));
 
 // Body parsing middleware (for completeness)
 app.use(express.json());
@@ -49,7 +49,12 @@ app.use((req, res, next) => {
 // Global error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ error: 'Internal Server Error' });
+  res.status(err.status || 500).json({
+    error: {
+      message: err.message || 'Internal Server Error',
+      status: err.status || 500
+    }
+  });
 });
 
 // Export app for testing, conditionally start server
